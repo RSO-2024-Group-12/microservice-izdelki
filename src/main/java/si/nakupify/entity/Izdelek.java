@@ -15,8 +15,6 @@ public class Izdelek extends PanacheEntity {
 
     public Float cena;
 
-    public Integer zaloga;
-
     public Boolean aktiven;
 
     public Date datum_dodajanja;
@@ -29,7 +27,6 @@ public class Izdelek extends PanacheEntity {
         this.naziv = naziv;
         this.opis = opis;
         this.cena = cena;
-        this.zaloga = 0;
         this.aktiven = true;
         this.datum_dodajanja = Date.valueOf(LocalDate.now());
         this.datum_spremembe = Date.valueOf(LocalDate.now());

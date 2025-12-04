@@ -1,4 +1,4 @@
-package si.nakupify.service;
+package si.nakupify.service.repository;
 
 import io.quarkus.hibernate.orm.panache.PanacheRepository;
 import jakarta.enterprise.context.ApplicationScoped;

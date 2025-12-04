@@ -11,11 +11,7 @@ public class IzdelekDTO {
 
     private String opis;
 
-    private List<SlikaDTO> slike;
-
-    private float cena;
-
-    private Integer zaloga;
+    private Float cena;
 
     private Boolean aktiven;
 
@@ -23,19 +19,40 @@ public class IzdelekDTO {
 
     private Date datum_spremembe;
 
+    private Integer zaloga;
+
+    private List<SlikaDTO> slike;
+
+    private List<SlikaDTO> slikeDodaj;
+
+    private List<SlikaDTO> slikeBrisi;
+
+    private List<LastnostDTO> lastnosti;
+
+    private List<LastnostDTO> lastnostiDodaj;
+
+    private List<LastnostDTO> lastnostiBrisi;
+
     public IzdelekDTO() {}
 
-    public IzdelekDTO(Long id_izdelek, String naziv, String opis, List<SlikaDTO> slike, float cena,
-                      Integer zaloga, Boolean aktiven, Date datum_dodajanja, Date datum_spremembe) {
+    public IzdelekDTO(Long id_izdelek, String naziv, String opis, Float cena, Boolean aktiven,
+                      Date datum_dodajanja, Date datum_spremembe, Integer zaloga,
+                      List<SlikaDTO> slike, List<SlikaDTO> slikeDodaj, List<SlikaDTO> slikeBrisi,
+                      List<LastnostDTO> lastnosti, List<LastnostDTO> lastnostiDodaj, List<LastnostDTO> lastnostiBrisi) {
         this.id_izdelek = id_izdelek;
         this.naziv = naziv;
         this.opis = opis;
-        this.slike = slike;
         this.cena = cena;
-        this.zaloga = zaloga;
         this.aktiven = aktiven;
         this.datum_dodajanja = datum_dodajanja;
         this.datum_spremembe = datum_spremembe;
+        this.zaloga = zaloga;
+        this.slike = slike;
+        this.slikeDodaj = slikeDodaj;
+        this.slikeBrisi = slikeBrisi;
+        this.lastnosti = lastnosti;
+        this.lastnostiDodaj = lastnostiDodaj;
+        this.lastnostiBrisi = lastnostiBrisi;
     }
 
     public Long getId_izdelek() {
@@ -62,28 +79,12 @@ public class IzdelekDTO {
         this.opis = opis;
     }
 
-    public List<SlikaDTO> getSlike() {
-        return slike;
-    }
-
-    public void setSlike(List<SlikaDTO> slike) {
-        this.slike = slike;
-    }
-
-    public float getCena() {
+    public Float getCena() {
         return cena;
     }
 
-    public void setCena(float cena) {
+    public void setCena(Float cena) {
         this.cena = cena;
-    }
-
-    public Integer getZaloga() {
-        return zaloga;
-    }
-
-    public void setZaloga(Integer zaloga) {
-        this.zaloga = zaloga;
     }
 
     public Boolean getAktiven() {
@@ -108,5 +109,61 @@ public class IzdelekDTO {
 
     public void setDatum_spremembe(Date datum_spremembe) {
         this.datum_spremembe = datum_spremembe;
+    }
+
+    public Integer getZaloga() {
+        return zaloga;
+    }
+
+    public void setZaloga(Integer zaloga) {
+        this.zaloga = zaloga;
+    }
+
+    public List<SlikaDTO> getSlike() {
+        return slike;
+    }
+
+    public void setSlike(List<SlikaDTO> slike) {
+        this.slike = slike;
+    }
+
+    public List<SlikaDTO> getSlikeDodaj() {
+        return slikeDodaj;
+    }
+
+    public void setSlikeDodaj(List<SlikaDTO> slikeDodaj) {
+        this.slikeDodaj = slikeDodaj;
+    }
+
+    public List<SlikaDTO> getSlikeBrisi() {
+        return slikeBrisi;
+    }
+
+    public void setSlikeBrisi(List<SlikaDTO> slikeBrisi) {
+        this.slikeBrisi = slikeBrisi;
+    }
+
+    public List<LastnostDTO> getLastnosti() {
+        return lastnosti;
+    }
+
+    public void setLastnosti(List<LastnostDTO> lastnosti) {
+        this.lastnosti = lastnosti;
+    }
+
+    public List<LastnostDTO> getLastnostiDodaj() {
+        return lastnostiDodaj;
+    }
+
+    public void setLastnostiDodaj(List<LastnostDTO> lastnostiDodaj) {
+        this.lastnostiDodaj = lastnostiDodaj;
+    }
+
+    public List<LastnostDTO> getLastnostiBrisi() {
+        return lastnostiBrisi;
+    }
+
+    public void setLastnostiBrisi(List<LastnostDTO> lastnostiBrisi) {
+        this.lastnostiBrisi = lastnostiBrisi;
     }
 }

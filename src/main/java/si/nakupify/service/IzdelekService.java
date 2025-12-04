@@ -6,9 +6,8 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import si.nakupify.entity.Izdelek;
-import si.nakupify.entity.Slika;
 import si.nakupify.service.dto.IzdelekDTO;
-import si.nakupify.service.dto.SlikaDTO;
+import si.nakupify.service.repository.IzdelekRepository;
 
 import java.sql.Date;
 import java.time.LocalDate;
@@ -23,7 +22,10 @@ public class IzdelekService {
     IzdelekRepository izdelekRepository;
 
     @Inject
-    SlikaRepository slikaRepository;
+    SlikaService slikaService;
+
+    @Inject
+    LastnostService lastnostService;
 
     private Logger log = Logger.getLogger(IzdelekService.class.getName());
 
@@ -43,7 +45,7 @@ public class IzdelekService {
         return pridobiSeznamIzdelkov(izdelekRepository.listAll());
     }
 
-    public List<IzdelekDTO> pridobiAktivneIzdelke() {
+    public List<IzdelekDTO> pridobiVseAktivneIzdelke() {
         return pridobiSeznamIzdelkov(izdelekRepository.aktivniIzdeleki());
     }
 
@@ -59,9 +61,9 @@ public class IzdelekService {
     }
 
     public IzdelekDTO pridobiIzdelek(Long id_izdelek) {
-        Izdelek izdelek = izdelekRepository.findById(Long.valueOf(id_izdelek));
+        Izdelek izdelek = izdelekRepository.findById(id_izdelek);
         if (izdelek == null) {
-            log.info("Iskanje izdelka z id=" + id_izdelek + " ni bilo mogoče najti, saj ne obstaja!");
+            log.info("Izdelka z id " + id_izdelek + "ni bilo mogoče najti!");
             return null;
         }
 
@@ -70,67 +72,33 @@ public class IzdelekService {
         izdelekDTO.setNaziv(izdelek.naziv);
         izdelekDTO.setOpis(izdelek.opis);
         izdelekDTO.setCena(izdelek.cena);
-        izdelekDTO.setZaloga(izdelek.zaloga);
         izdelekDTO.setAktiven(izdelek.aktiven);
         izdelekDTO.setDatum_dodajanja(izdelek.datum_dodajanja);
         izdelekDTO.setDatum_spremembe(izdelek.datum_spremembe);
-
-        List<Slika> slikaList = slikaRepository.izdelekSlike(izdelek.id);
-        List<SlikaDTO> slikaDTOList = new ArrayList<>();
-        for (Slika slika : slikaList) {
-            SlikaDTO slikaDTO = new SlikaDTO();
-            slikaDTO.setId_slika(slika.id);
-            slikaDTO.setUrl(slika.url);
-
-            slikaDTOList.add(slikaDTO);
-        }
-        izdelekDTO.setSlike(slikaDTOList);
+        izdelekDTO.setZaloga(0);
+        izdelekDTO.setSlike(slikaService.pridobiSlike(izdelek.id));
+        izdelekDTO.setLastnosti(lastnostService.pridobiLastnosti(izdelek.id));
 
         return izdelekDTO;
     }
 
-    public boolean validirajIzdelek(IzdelekDTO izdelekDTO) {
-        if (izdelekDTO.getNaziv() == null && izdelekDTO.getNaziv().isBlank() ||
-                izdelekDTO.getOpis() == null && izdelekDTO.getOpis().isBlank() ||
-                izdelekDTO.getCena() <= 0) {
-            log.info("Podani manjkajoči podatki!");
-            return false;
-        }
-
-        return true;
-    }
-
     @Transactional
-    public IzdelekDTO ustvariIzdelek(IzdelekDTO izdelekDTO) {
-        if (!validirajIzdelek(izdelekDTO)) {
-            return null;
-        }
-
+    public IzdelekDTO dodajIzdelek(IzdelekDTO izdelekDTO) {
         Izdelek izdelek = new Izdelek(izdelekDTO.getNaziv(), izdelekDTO.getOpis(), izdelekDTO.getCena());
         izdelekRepository.persist(izdelek);
 
-        for (SlikaDTO slikaDTO : izdelekDTO.getSlike()) {
-            Slika slika = new Slika(izdelek.id, slikaDTO.getUrl());
-            slikaRepository.persist(slika);
-        }
+        slikaService.posodobiSlike(izdelek, izdelekDTO);
+        lastnostService.posodobiLastnosti(izdelek, izdelekDTO);
 
         return pridobiIzdelek(izdelek.id);
     }
 
     @Transactional
     public IzdelekDTO posodobiIzdelek(IzdelekDTO izdelekDTO) {
-        if (!validirajIzdelek(izdelekDTO)) {
-            IzdelekDTO response = new IzdelekDTO();
-            response.setId_izdelek((long) -1);
-            return response;
-        }
-
-        Izdelek izdelek = izdelekRepository.findById(Long.valueOf(izdelekDTO.getId_izdelek()));
+        Izdelek izdelek = izdelekRepository.findById(izdelekDTO.getId_izdelek());
         if (izdelek == null) {
             log.info("Izdelka z id " + izdelekDTO.getId_izdelek() + "ni bilo mogoče najti!");
-            IzdelekDTO response = new IzdelekDTO();
-            response.setId_izdelek((long) -2);
-            return response;
+            return null;
         }
 
         izdelek.naziv = izdelekDTO.getNaziv();
@@ -138,51 +106,8 @@ public class IzdelekService {
         izdelek.cena = izdelekDTO.getCena();
         izdelek.datum_spremembe = Date.valueOf(LocalDate.now());
 
-        List<SlikaDTO> slikaDTOList = izdelekDTO.getSlike();
-        List<SlikaDTO> removeList = new ArrayList<>();
-        for (SlikaDTO slikaDTO : slikaDTOList) {
-            if (slikaDTO.getId_slika() == -1) {
-                Slika slika = new Slika(izdelek.id, slikaDTO.getUrl());
-                slikaRepository.persist(slika);
-                removeList.add(slikaDTO);
-            }
-        }
-        slikaDTOList.removeAll(removeList);
-
-        List<Slika> slikaList = slikaRepository.listAll();
-        for (Slika slika : slikaList) {
-            boolean remove = true;
-
-            for (SlikaDTO slikaDTO : slikaDTOList) {
-                if (slika.id == slikaDTO.getId_slika()) {
-                    remove = false;
-                    break;
-                }
-            }
-
-            if (remove) {
-                slikaRepository.deleteById(slika.id);
-            }
-        }
-
-        return pridobiIzdelek(izdelek.id);
-    }
-
-    @Transactional
-    public IzdelekDTO posodobiZalogaIzdelek(IzdelekDTO izdelekDTO) {
-        Izdelek izdelek = izdelekRepository.findById(Long.valueOf(izdelekDTO.getId_izdelek()));
-        if (izdelek == null) {
-            log.info("Izdelka z id " + izdelekDTO.getId_izdelek() + "ni bilo mogoče najti!");
-            return null;
-        }
-
-        Integer novaZaloga = izdelek.zaloga + izdelekDTO.getZaloga();
-        if (novaZaloga < 0) {
-            log.info("Izdelka ne more imeti negativne zaloge!");
-            return null;
-        }
-
-        izdelek.zaloga = novaZaloga;
+        slikaService.posodobiSlike(izdelek, izdelekDTO);
+        lastnostService.posodobiLastnosti(izdelek, izdelekDTO);
 
         return pridobiIzdelek(izdelek.id);
     }
