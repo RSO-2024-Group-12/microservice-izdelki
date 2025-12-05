@@ -3,6 +3,7 @@ package si.nakupify.endpoint.v1.GraphQL;
 import jakarta.inject.Inject;
 import org.eclipse.microprofile.graphql.Description;
 import org.eclipse.microprofile.graphql.GraphQLApi;
+import org.eclipse.microprofile.graphql.Name;
 import org.eclipse.microprofile.graphql.Query;
 import si.nakupify.service.IzdelekService;
 import si.nakupify.service.dto.IzdelekDTO;
@@ -29,7 +30,7 @@ public class IzdelekGraphQL {
 
     @Query("getIzdelek")
     @Description("Vrne izdelek s podanim id.")
-    public IzdelekDTO getIzdelek(Long id) {
+    public IzdelekDTO getIzdelek(@Name("id") Long id) {
         return izdelekService.pridobiIzdelek(id);
     }
 }

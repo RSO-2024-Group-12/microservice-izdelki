@@ -9,6 +9,8 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 import si.nakupify.service.IzdelekService;
 import si.nakupify.service.dto.IzdelekDTO;
+import si.nakupify.service.dto.LastnostDTO;
+import si.nakupify.service.dto.SlikaDTO;
 
 import java.util.List;
 import java.util.logging.Logger;
@@ -16,20 +18,66 @@ import java.util.logging.Logger;
 @Path("/v1/izdelki")
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
-public class IzdelekResource {
+public class IzdelekREST {
 
     @Inject
     IzdelekService izdelekService;
 
-    private Logger log = Logger.getLogger(IzdelekResource.class.getName());
+    private Logger log = Logger.getLogger(IzdelekREST.class.getName());
 
     public boolean validacija(IzdelekDTO izdelekDTO) {
         if (izdelekDTO == null ||
                 izdelekDTO.getNaziv() == null || izdelekDTO.getNaziv().isBlank() ||
                 izdelekDTO.getOpis() == null || izdelekDTO.getOpis().isBlank() ||
                 izdelekDTO.getCena() == null || izdelekDTO.getCena() <= 0) {
-            log.info("Podani manjkajoči podatki za izdelek!");
+            log.info("Podani manjkajoči ali nepravilni podatki!");
             return false;
+        }
+
+        for (SlikaDTO slika : izdelekDTO.getSlike()) {
+            if (slika.getId_slika() == null ||
+                    slika.getUrl() == null || slika.getUrl().isBlank()) {
+                log.info("Podani manjkajoči ali nepravilni podatki!");
+                return false;
+            }
+        }
+
+        for (SlikaDTO slika : izdelekDTO.getSlikeDodaj()) {
+            if (slika.getUrl() == null || slika.getUrl().isBlank()) {
+                log.info("Podani manjkajoči ali nepravilni podatki!");
+                return false;
+            }
+        }
+
+        for (SlikaDTO slika : izdelekDTO.getSlikeBrisi()) {
+            if (slika.getId_slika() == null) {
+                log.info("Podani manjkajoči ali nepravilni podatki!");
+                return false;
+            }
+        }
+
+        for (LastnostDTO lastnost : izdelekDTO.getLastnosti()) {
+            if (lastnost.getId_lastnost() == null ||
+                    lastnost.getLastnost() == null || lastnost.getLastnost().isBlank() ||
+                    lastnost.getVrednost() == null || lastnost.getVrednost().isBlank()) {
+                log.info("Podani manjkajoči ali nepravilni podatki!");
+                return false;
+            }
+        }
+
+        for (LastnostDTO lastnost : izdelekDTO.getLastnostiDodaj()) {
+            if (lastnost.getLastnost() == null || lastnost.getLastnost().isBlank() ||
+                    lastnost.getVrednost() == null || lastnost.getVrednost().isBlank()) {
+                log.info("Podani manjkajoči ali nepravilni podatki!");
+                return false;
+            }
+        }
+
+        for (LastnostDTO lastnost : izdelekDTO.getLastnostiBrisi()) {
+            if (lastnost.getId_lastnost() == null) {
+                log.info("Podani manjkajoči ali nepravilni podatki!");
+                return false;
+            }
         }
 
         return true;
