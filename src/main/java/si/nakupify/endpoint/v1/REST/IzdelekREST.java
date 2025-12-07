@@ -30,28 +30,28 @@ public class IzdelekREST {
                 izdelekDTO.getNaziv() == null || izdelekDTO.getNaziv().isBlank() ||
                 izdelekDTO.getOpis() == null || izdelekDTO.getOpis().isBlank() ||
                 izdelekDTO.getCena() == null || izdelekDTO.getCena() <= 0) {
-            log.info("Podani manjkajoči ali nepravilni podatki!");
+            log.info("Podani manjkajoči ali nepravilni podatki za izdelek!");
             return false;
         }
 
         for (SlikaDTO slika : izdelekDTO.getSlike()) {
             if (slika.getId_slika() == null ||
                     slika.getUrl() == null || slika.getUrl().isBlank()) {
-                log.info("Podani manjkajoči ali nepravilni podatki!");
+                log.info("Podani manjkajoči ali nepravilni podatki za slike(posodobitev)!");
                 return false;
             }
         }
 
         for (SlikaDTO slika : izdelekDTO.getSlikeDodaj()) {
             if (slika.getUrl() == null || slika.getUrl().isBlank()) {
-                log.info("Podani manjkajoči ali nepravilni podatki!");
+                log.info("Podani manjkajoči ali nepravilni podatki za slike(dodajanje)!");
                 return false;
             }
         }
 
         for (SlikaDTO slika : izdelekDTO.getSlikeBrisi()) {
             if (slika.getId_slika() == null) {
-                log.info("Podani manjkajoči ali nepravilni podatki!");
+                log.info("Podani manjkajoči ali nepravilni podatki za slike(brisanje)!");
                 return false;
             }
         }
@@ -60,7 +60,7 @@ public class IzdelekREST {
             if (lastnost.getId_lastnost() == null ||
                     lastnost.getLastnost() == null || lastnost.getLastnost().isBlank() ||
                     lastnost.getVrednost() == null || lastnost.getVrednost().isBlank()) {
-                log.info("Podani manjkajoči ali nepravilni podatki!");
+                log.info("Podani manjkajoči ali nepravilni podatki za lastnosti(posodobitev)!");
                 return false;
             }
         }
@@ -68,14 +68,14 @@ public class IzdelekREST {
         for (LastnostDTO lastnost : izdelekDTO.getLastnostiDodaj()) {
             if (lastnost.getLastnost() == null || lastnost.getLastnost().isBlank() ||
                     lastnost.getVrednost() == null || lastnost.getVrednost().isBlank()) {
-                log.info("Podani manjkajoči ali nepravilni podatki!");
+                log.info("Podani manjkajoči ali nepravilni podatki za lastnosti(dodajanje)!");
                 return false;
             }
         }
 
         for (LastnostDTO lastnost : izdelekDTO.getLastnostiBrisi()) {
             if (lastnost.getId_lastnost() == null) {
-                log.info("Podani manjkajoči ali nepravilni podatki!");
+                log.info("Podani manjkajoči ali nepravilni podatki za lastnosti(brisanje)!");
                 return false;
             }
         }

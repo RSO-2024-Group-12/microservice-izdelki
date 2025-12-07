@@ -21,16 +21,6 @@ public class LastnostService {
 
     private Logger log = Logger.getLogger(LastnostService.class.getName());
 
-    public boolean validiraj(LastnostDTO lastnostDTO) {
-        if (lastnostDTO.getLastnost() == null && lastnostDTO.getLastnost().isBlank() ||
-                lastnostDTO.getVrednost() == null && lastnostDTO.getVrednost().isBlank()) {
-            log.info("Podani napačni podatki za lastnost!");
-            return false;
-        }
-
-        return true;
-    }
-
     public List<LastnostDTO> pridobiLastnosti(Long id_izdelek) {
         List<Lastnost> lastnostList = lastnostRepository.izdelekLastnosti(id_izdelek);
         List<LastnostDTO> lastnostDTOList = new ArrayList<>();
@@ -47,27 +37,30 @@ public class LastnostService {
     public void posodobiLastnosti(Izdelek izdelek, IzdelekDTO izdelekDTO) {
         if (izdelekDTO.getLastnostiDodaj() != null) {
             for (LastnostDTO lastnostDTO : izdelekDTO.getLastnostiDodaj()) {
-                if (validiraj(lastnostDTO)) {
-                    lastnostRepository.persist(new Lastnost(izdelek.id, lastnostDTO.getLastnost(), lastnostDTO.getVrednost()));
-                }
+                lastnostRepository.persist(new Lastnost(izdelek.id, lastnostDTO.getLastnost(), lastnostDTO.getVrednost()));
             }
         }
 
         if (izdelekDTO.getLastnosti() != null) {
             for (LastnostDTO lastnostDTO : izdelekDTO.getLastnosti()) {
-                if (validiraj(lastnostDTO)) {
-                    Lastnost lastnost = lastnostRepository.findById(lastnostDTO.getId_lastnost());
-                    if (lastnost != null) {
-                        lastnost.lastnost = lastnostDTO.getLastnost();
-                        lastnost.vrednost = lastnostDTO.getVrednost();
-                    }
+                Lastnost lastnost = lastnostRepository.findById(lastnostDTO.getId_lastnost());
+                if (lastnost != null) {
+                    lastnost.lastnost = lastnostDTO.getLastnost();
+                    lastnost.vrednost = lastnostDTO.getVrednost();
+                } else {
+                    log.info("Lastnosti z id " + lastnostDTO.getId_lastnost() + "ni bilo mogoče najti!");
                 }
             }
         }
 
         if (izdelekDTO.getLastnostiBrisi() != null) {
             for (LastnostDTO lastnostDTO : izdelekDTO.getLastnostiBrisi()) {
-                lastnostRepository.deleteById(lastnostDTO.getId_lastnost());
+                Lastnost lastnost = lastnostRepository.findById(lastnostDTO.getId_lastnost());
+                if (lastnost != null) {
+                    lastnostRepository.deleteById(lastnostDTO.getId_lastnost());
+                } else {
+                    log.info("Lastnosti z id " + lastnostDTO.getId_lastnost() + "ni bilo mogoče najti!");
+                }
             }
         }
     }

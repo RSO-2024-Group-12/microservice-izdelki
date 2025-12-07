@@ -34,39 +34,33 @@ public class SlikaService {
         return slikaDTOList;
     }
 
-    public boolean validirajSliko(SlikaDTO slikaDTO) {
-        if (slikaDTO.getUrl() == null && slikaDTO.getUrl().isBlank()) {
-            log.info("Podani mankajoči podatki za sliko!");
-            return false;
-        }
-
-        return true;
-    }
-
     @Transactional
     public void posodobiSlike(Izdelek izdelek, IzdelekDTO izdelekDTO) {
         if (izdelekDTO.getSlikeDodaj() != null) {
             for (SlikaDTO slikaDTO : izdelekDTO.getSlikeDodaj()) {
-                if (validirajSliko(slikaDTO)) {
-                    slikaRepository.persist(new Slika(izdelek.id, slikaDTO.getUrl()));
-                }
+                slikaRepository.persist(new Slika(izdelek.id, slikaDTO.getUrl()));
             }
         }
 
         if (izdelekDTO.getSlike() != null) {
             for (SlikaDTO slikaDTO : izdelekDTO.getSlike()) {
-                if (validirajSliko(slikaDTO)) {
-                    Slika slika = slikaRepository.findById(Long.valueOf(slikaDTO.getId_slika()));
-                    if (slika == null) {
-                        slika.url = slikaDTO.getUrl();
-                    }
+                Slika slika = slikaRepository.findById(slikaDTO.getId_slika());
+                if (slika != null) {
+                    slika.url = slikaDTO.getUrl();
+                } else {
+                    log.info("Slike z id " + slikaDTO.getId_slika() + "ni bilo mogoče najti!");
                 }
             }
         }
 
         if (izdelekDTO.getSlikeBrisi() != null) {
             for (SlikaDTO slikaDTO : izdelekDTO.getSlikeBrisi()) {
-                slikaRepository.deleteById(Long.valueOf(slikaDTO.getId_slika()));
+                Slika slika = slikaRepository.findById(slikaDTO.getId_slika());
+                if (slika != null) {
+                    slikaRepository.deleteById(slikaDTO.getId_slika());
+                } else {
+                    log.info("Slike z id " + slikaDTO.getId_slika() + "ni bilo mogoče najti!");
+                }
             }
         }
     }
