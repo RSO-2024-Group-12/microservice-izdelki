@@ -48,7 +48,7 @@ public class LastnostService {
                     lastnost.lastnost = lastnostDTO.getLastnost();
                     lastnost.vrednost = lastnostDTO.getVrednost();
                 } else {
-                    log.info("Lastnosti z id " + lastnostDTO.getId_lastnost() + "ni bilo mogoče najti!");
+                    log.info("Not Found Error: Lastnosti z id=" + lastnostDTO.getId_lastnost() + " ni bilo mogoče najti!");
                 }
             }
         }
@@ -59,7 +59,7 @@ public class LastnostService {
                 if (lastnost != null) {
                     lastnostRepository.deleteById(lastnostDTO.getId_lastnost());
                 } else {
-                    log.info("Lastnosti z id " + lastnostDTO.getId_lastnost() + "ni bilo mogoče najti!");
+                    log.info("Not Found Error: Lastnosti z id=" + lastnostDTO.getId_lastnost() + " ni bilo mogoče najti!");
                 }
             }
         }

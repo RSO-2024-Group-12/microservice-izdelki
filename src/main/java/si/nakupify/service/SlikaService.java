@@ -48,7 +48,7 @@ public class SlikaService {
                 if (slika != null) {
                     slika.url = slikaDTO.getUrl();
                 } else {
-                    log.info("Slike z id " + slikaDTO.getId_slika() + "ni bilo mogoče najti!");
+                    log.info("Not Found Error: Slike z id=" + slikaDTO.getId_slika() + " ni bilo mogoče najti!");
                 }
             }
         }
@@ -59,7 +59,7 @@ public class SlikaService {
                 if (slika != null) {
                     slikaRepository.deleteById(slikaDTO.getId_slika());
                 } else {
-                    log.info("Slike z id " + slikaDTO.getId_slika() + "ni bilo mogoče najti!");
+                    log.info("Not Found Error: Slike z id=" + slikaDTO.getId_slika() + " ni bilo mogoče najti!");
                 }
             }
         }

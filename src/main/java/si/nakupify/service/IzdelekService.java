@@ -6,7 +6,11 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import si.nakupify.entity.Izdelek;
+import si.nakupify.service.client.SkladisceClient;
+import si.nakupify.service.dto.ErrorDTO;
 import si.nakupify.service.dto.IzdelekDTO;
+import si.nakupify.service.dto.PairDTO;
+import si.nakupify.service.dto.ZalogaDTO;
 import si.nakupify.service.repository.IzdelekRepository;
 
 import java.sql.Date;
@@ -27,18 +31,19 @@ public class IzdelekService {
     @Inject
     LastnostService lastnostService;
 
+    @Inject
+    SkladisceClient skladisceClient;
+
     private Logger log = Logger.getLogger(IzdelekService.class.getName());
 
     @PostConstruct
     private void init() {
-        log.info("Inicializacija mikrostoritve izdelki.");
-        System.out.println("Inicializacija mikrostoritve izdelki.");
+        log.info("Inicializacija microservice-izdelki");
     }
 
     @PreDestroy
     private void destroy() {
-        log.info("Ustavitev mikrostoritve izdelki.");
-        System.out.println("Ustavitev mikrostoritve izdelki.");
+        log.info("Ustavitev microservice-izdelki");
     }
 
     public List<IzdelekDTO> pridobiVseIzdelke() {
@@ -53,18 +58,19 @@ public class IzdelekService {
         List<IzdelekDTO> izdelekDTOList = new ArrayList<>();
 
         for (Izdelek izdelek : izdelekList) {
-            IzdelekDTO izdelekDTO = pridobiIzdelek(izdelek.id);
-            izdelekDTOList.add(izdelekDTO);
+            PairDTO<IzdelekDTO, ErrorDTO> pair = pridobiIzdelek(izdelek.id);
+            izdelekDTOList.add(pair.getValue());
         }
 
         return izdelekDTOList;
     }
 
-    public IzdelekDTO pridobiIzdelek(Long id_izdelek) {
+    public PairDTO<IzdelekDTO, ErrorDTO> pridobiIzdelek(Long id_izdelek) {
         Izdelek izdelek = izdelekRepository.findById(id_izdelek);
         if (izdelek == null) {
-            log.info("Izdelka z id " + id_izdelek + "ni bilo mogoče najti!");
-            return null;
+            log.info("Not Found Error: Izdelka z id=" + id_izdelek + " ni bilo mogoče najti");
+            ErrorDTO notFoundError = new ErrorDTO(404, "Izdelka s podanim id_izdelek ni bilo mogoče najti!");
+            return new PairDTO<>(null, notFoundError);
         }
 
         IzdelekDTO izdelekDTO = new IzdelekDTO();
@@ -75,17 +81,26 @@ public class IzdelekService {
         izdelekDTO.setAktiven(izdelek.aktiven);
         izdelekDTO.setDatum_dodajanja(izdelek.datum_dodajanja);
         izdelekDTO.setDatum_spremembe(izdelek.datum_spremembe);
-        izdelekDTO.setZaloga(0);
+
+        ZalogaDTO zalogaDTO = skladisceClient.getZalogaDTO(id_izdelek);
+        if (zalogaDTO == null) {
+            izdelekDTO.setZaloga(0);
+        } else {
+            izdelekDTO.setZaloga(zalogaDTO.getStock());
+        }
+
         izdelekDTO.setSlike(slikaService.pridobiSlike(izdelek.id));
         izdelekDTO.setLastnosti(lastnostService.pridobiLastnosti(izdelek.id));
 
-        return izdelekDTO;
+        return new PairDTO<>(izdelekDTO, null);
     }
 
     @Transactional
-    public IzdelekDTO dodajIzdelek(IzdelekDTO izdelekDTO) {
+    public PairDTO<IzdelekDTO, ErrorDTO> dodajIzdelek(IzdelekDTO izdelekDTO) {
         Izdelek izdelek = new Izdelek(izdelekDTO.getNaziv(), izdelekDTO.getOpis(), izdelekDTO.getCena());
         izdelekRepository.persist(izdelek);
+
+        skladisceClient.postZalogaDTO(izdelek.id);
 
         slikaService.posodobiSlike(izdelek, izdelekDTO);
         lastnostService.posodobiLastnosti(izdelek, izdelekDTO);
@@ -94,11 +109,12 @@ public class IzdelekService {
     }
 
     @Transactional
-    public IzdelekDTO posodobiIzdelek(IzdelekDTO izdelekDTO) {
+    public PairDTO<IzdelekDTO, ErrorDTO> posodobiIzdelek(IzdelekDTO izdelekDTO) {
         Izdelek izdelek = izdelekRepository.findById(izdelekDTO.getId_izdelek());
         if (izdelek == null) {
-            log.info("Izdelka z id " + izdelekDTO.getId_izdelek() + "ni bilo mogoče najti!");
-            return null;
+            log.info("Not Found Error: Izdelka z id=" + izdelekDTO.getId_izdelek() + " ni bilo mogoče najti");
+            ErrorDTO notFoundError = new ErrorDTO(404, "Izdelka s podanim id_izdelek ni bilo mogoče najti!");
+            return new PairDTO<>(null, notFoundError);
         }
 
         izdelek.naziv = izdelekDTO.getNaziv();
@@ -113,11 +129,12 @@ public class IzdelekService {
     }
 
     @Transactional
-    public IzdelekDTO izbrisiIzdelek(Long id_izdelek) {
+    public PairDTO<IzdelekDTO, ErrorDTO> izbrisiIzdelek(Long id_izdelek) {
         Izdelek izdelek = izdelekRepository.findById(id_izdelek);
         if (izdelek == null) {
-            log.info("Izdelka z id " + id_izdelek + "ni bilo mogoče najti!");
-            return null;
+            log.info("Not Found Error: Izdelka z id=" + id_izdelek + " ni bilo mogoče najti");
+            ErrorDTO notFoundError = new ErrorDTO(404, "Izdelka s podanim id_izdelek ni bilo mogoče najti!");
+            return new PairDTO<>(null, notFoundError);
         }
 
         izdelek.aktiven = false;

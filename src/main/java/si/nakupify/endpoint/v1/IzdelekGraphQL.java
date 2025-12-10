@@ -1,4 +1,4 @@
-package si.nakupify.endpoint.v1.GraphQL;
+package si.nakupify.endpoint.v1;
 
 import jakarta.inject.Inject;
 import org.eclipse.microprofile.graphql.Description;
@@ -6,7 +6,9 @@ import org.eclipse.microprofile.graphql.GraphQLApi;
 import org.eclipse.microprofile.graphql.Name;
 import org.eclipse.microprofile.graphql.Query;
 import si.nakupify.service.IzdelekService;
+import si.nakupify.service.dto.ErrorDTO;
 import si.nakupify.service.dto.IzdelekDTO;
+import si.nakupify.service.dto.PairDTO;
 
 import java.util.List;
 
@@ -31,6 +33,8 @@ public class IzdelekGraphQL {
     @Query("getIzdelek")
     @Description("Vrne izdelek s podanim id.")
     public IzdelekDTO getIzdelek(@Name("id") Long id) {
-        return izdelekService.pridobiIzdelek(id);
+        PairDTO<IzdelekDTO, ErrorDTO> pair = izdelekService.pridobiIzdelek(id);
+        IzdelekDTO izdelekDTO = pair.getValue();
+        return izdelekDTO;
     }
 }
