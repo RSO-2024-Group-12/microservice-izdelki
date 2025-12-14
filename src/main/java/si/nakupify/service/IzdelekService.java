@@ -46,23 +46,30 @@ public class IzdelekService {
         log.info("Ustavitev microservice-izdelki");
     }
 
-    public List<IzdelekDTO> pridobiVseIzdelke() {
+    public PairDTO<List<IzdelekDTO>, ErrorDTO> pridobiVseIzdelke() {
         return pridobiSeznamIzdelkov(izdelekRepository.listAll());
     }
 
-    public List<IzdelekDTO> pridobiVseAktivneIzdelke() {
+    public PairDTO<List<IzdelekDTO>, ErrorDTO> pridobiVseAktivneIzdelke() {
         return pridobiSeznamIzdelkov(izdelekRepository.aktivniIzdeleki());
     }
 
-    public List<IzdelekDTO> pridobiSeznamIzdelkov(List<Izdelek> izdelekList) {
+    public PairDTO<List<IzdelekDTO>, ErrorDTO> pridobiSeznamIzdelkov(List<Izdelek> izdelekList) {
         List<IzdelekDTO> izdelekDTOList = new ArrayList<>();
 
         for (Izdelek izdelek : izdelekList) {
             PairDTO<IzdelekDTO, ErrorDTO> pair = pridobiIzdelek(izdelek.id);
-            izdelekDTOList.add(pair.getValue());
+            IzdelekDTO izdelekDTO = pair.getValue();
+            ErrorDTO error = pair.getError();
+
+            if (error != null) {
+                return new PairDTO<>(null, error);
+            }
+
+            izdelekDTOList.add(izdelekDTO);
         }
 
-        return izdelekDTOList;
+        return new PairDTO<>(izdelekDTOList, null);
     }
 
     public PairDTO<IzdelekDTO, ErrorDTO> pridobiIzdelek(Long id_izdelek) {
@@ -82,13 +89,15 @@ public class IzdelekService {
         izdelekDTO.setDatum_dodajanja(izdelek.datum_dodajanja);
         izdelekDTO.setDatum_spremembe(izdelek.datum_spremembe);
 
-        ZalogaDTO zalogaDTO = skladisceClient.getZalogaDTO(id_izdelek);
-        if (zalogaDTO == null) {
-            izdelekDTO.setZaloga(0);
-        } else {
-            izdelekDTO.setZaloga(zalogaDTO.getStock());
+        PairDTO<ZalogaDTO, ErrorDTO> pair = skladisceClient.getZalogaDTO(id_izdelek);
+        ZalogaDTO zalogaDTO = pair.getValue();
+        ErrorDTO error = pair.getError();
+
+        if (error != null) {
+            return new PairDTO<>(null, error);
         }
 
+        izdelekDTO.setZaloga(zalogaDTO.getStock());
         izdelekDTO.setSlike(slikaService.pridobiSlike(izdelek.id));
         izdelekDTO.setLastnosti(lastnostService.pridobiLastnosti(izdelek.id));
 
@@ -100,7 +109,11 @@ public class IzdelekService {
         Izdelek izdelek = new Izdelek(izdelekDTO.getNaziv(), izdelekDTO.getOpis(), izdelekDTO.getCena());
         izdelekRepository.persist(izdelek);
 
-        skladisceClient.postZalogaDTO(izdelek.id);
+        ErrorDTO error = skladisceClient.postZalogaDTO(izdelek.id);
+
+        if (error != null) {
+            return new PairDTO<>(null, error);
+        }
 
         slikaService.posodobiSlike(izdelek, izdelekDTO);
         lastnostService.posodobiLastnosti(izdelek, izdelekDTO);

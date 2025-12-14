@@ -5,6 +5,9 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.openapi.annotations.Operation;
+import org.eclipse.microprofile.openapi.annotations.enums.SchemaType;
+import org.eclipse.microprofile.openapi.annotations.media.Content;
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 import si.nakupify.service.IzdelekService;
@@ -111,39 +114,130 @@ public class IzdelekREST {
     }
 
     @GET
-    @Operation(summary="Pridobi vse izdelke", description="Vrne seznam vseh izdelkov.")
+    @Operation(
+            summary="Pridobi vse izdelke",
+            description="Vrne seznam vseh izdelkov.<br>" +
+                    "V primeru napake vrne objekt ErrorDTO z opisom napake."
+    )
     @APIResponses({
-            @APIResponse(responseCode="200", description="(OK) Uspešno vrne seznam vseh izdelkov.")
+            @APIResponse(
+                    responseCode="200",
+                    description="(OK) Uspešno vrnjen seznam izdelkov.",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(type = SchemaType.ARRAY, implementation = IzdelekDTO.class)
+                    )),
+            @APIResponse(
+                    responseCode="404",
+                    description="(NOT_FOUND) Ni bilo mogoče najti vseh potrebnih podatkov.",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorDTO.class)
+                    )),
+            @APIResponse(
+                    responseCode="503",
+                    description="(SERVICE UNAVALIABLE) Težava pri komunikaciji z drugo mikrostoritvijo.",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorDTO.class)
+                    ))
     })
     public Response getVsiIzdelki() {
-        List<IzdelekDTO> izdelki = izdelekService.pridobiVseIzdelke();
-        return Response.status(Response.Status.OK).entity(izdelki).build();
+        PairDTO<List<IzdelekDTO>, ErrorDTO> izdelkiDTO = izdelekService.pridobiVseIzdelke();
+        List<IzdelekDTO> izdelki = izdelkiDTO.getValue();
+        ErrorDTO error = izdelkiDTO.getError();
+
+        if (error != null) {
+            return Response.status(error.getErrorCode()).entity(error).build();
+        }
+
+        return Response.status(200).entity(izdelki).build();
     }
 
     @GET
     @Path("/aktivni")
-    @Operation(summary="Pridobi vse aktivne izdelke", description="Vrne seznam vseh aktivnih izdelkov.")
+    @Operation(
+            summary="Pridobi vse aktivne izdelke",
+            description="Vrne seznam izdelkov, ki bodo prikazani kupcem.<br>" +
+                    "V primeru napake vrne objekt ErrorDTO z opisom napake."
+    )
     @APIResponses({
-            @APIResponse(responseCode="200", description="(OK) Uspešno vrne seznam vseh aktivnih izdelkov.")
+            @APIResponse(
+                    responseCode="200",
+                    description="(OK) Uspešno vrnjen seznam aktivnih izdelkov.",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(type = SchemaType.ARRAY, implementation = IzdelekDTO.class)
+                    )),
+            @APIResponse(
+                    responseCode="404",
+                    description="(NOT_FOUND) Ni bilo mogoče najti vseh potrebnih podatkov.",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorDTO.class)
+                    )),
+            @APIResponse(
+                    responseCode="503",
+                    description="(SERVICE UNAVALIABLE) Težava pri komunikaciji z drugo mikrostoritvijo.",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorDTO.class)
+                    ))
     })
     public Response getVsiAktivniIzdelki() {
-        List<IzdelekDTO> izdelki = izdelekService.pridobiVseAktivneIzdelke();
-        return Response.status(Response.Status.OK).entity(izdelki).build();
+        PairDTO<List<IzdelekDTO>, ErrorDTO> izdelkiDTO = izdelekService.pridobiVseAktivneIzdelke();
+        List<IzdelekDTO> izdelki = izdelkiDTO.getValue();
+        ErrorDTO error = izdelkiDTO.getError();
+
+        if (error != null) {
+            return Response.status(error.getErrorCode()).entity(error).build();
+        }
+
+        return Response.status(200).entity(izdelki).build();
     }
 
     @GET
     @Path("{id}")
-    @Operation(summary="Pridobi izdelek", description="Vrne izdelek s podanim id.")
+    @Operation(
+            summary="Pridobi izdelek",
+            description="Vrne izdelek s podanim id.<br>" +
+                    "V primeru napake vrne objekt ErrorDTO z opisom napake."
+    )
     @APIResponses({
-            @APIResponse(responseCode="200", description="(OK) Uspešno vrne izdelek s podanim id."),
-            @APIResponse(responseCode="400", description="(BAD_REQUEST) Podana nepravilna oblika id v url."),
-            @APIResponse(responseCode="404", description="(NOT_FOUND) Izdelka ni bilo mogoče najti.")
+            @APIResponse(
+                    responseCode="200",
+                    description="(OK) Uspešno vrnjen izdelek.",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = IzdelekDTO.class)
+                    )),
+            @APIResponse(
+                    responseCode="400",
+                    description="(BAD_REQUEST) Podana nepravilna oblika URL.",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorDTO.class)
+                    )),
+            @APIResponse(
+                    responseCode="404",
+                    description="(NOT_FOUND) Ni bilo mogoče najti vseh potrebnih podatkov.",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorDTO.class)
+                    )),
+            @APIResponse(
+                    responseCode="503",
+                    description="(SERVICE UNAVALIABLE) Težava pri komunikaciji z drugo mikrostoritvijo.",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorDTO.class)
+                    ))
     })
     public Response getIzdelek(@PathParam("id") Long id) {
         if (id == null) {
             ErrorDTO parameterError = new ErrorDTO(400, "V URL mora biti podan parameter id.");
             log.info("Path parameter error: V URL ni podanega id");
-            return Response.status(Response.Status.BAD_REQUEST).entity(parameterError).build();
+            return Response.status(parameterError.getErrorCode()).entity(parameterError).build();
         }
 
         PairDTO<IzdelekDTO, ErrorDTO> pair = izdelekService.pridobiIzdelek(id);
@@ -151,47 +245,116 @@ public class IzdelekREST {
         ErrorDTO error = pair.getError();
 
         if (error != null) {
-            if (error.getErrorCode() == 404) {
-                return Response.status(Response.Status.NOT_FOUND).entity(error).build();
-            }
+            return Response.status(error.getErrorCode()).entity(error).build();
         }
 
-        return Response.status(Response.Status.OK).entity(izdelek).build();
+        return Response.status(200).entity(izdelek).build();
     }
 
     @POST
-    @Operation(summary="Ustvari nov izdelek", description="Ustvari in shrani nov izdelek.<br>" +
-            "Potrebuje le polja naziv, opis, cena.<br>" +
-            "Slike in lastnosti novega izdelka morajo biti podane v poljih slikeDodaj in stnostiDodaj.")
+    @Operation(
+            summary="Ustvari nov izdelek",
+            description="Ustvari in dodaj nov izdelek.<br>" +
+                    "Potrebuje le polja naziv, opis, cena.<br>" +
+                    "Slike in lastnosti novega izdelka morajo biti podane v poljih slikeDodaj in lastnostiDodaj.<br>" +
+                    "V primeru napake vrne objekt ErrorDTO z opisom napake."
+    )
     @APIResponses({
-            @APIResponse(responseCode="201", description="(CREATED) Uspešno ustvarjen in shranjen nov izdelek."),
-            @APIResponse(responseCode="400", description="(BAD_REQUEST) Podana nepravilna oblika oz. nepopolna oblika IzdelekDTO.")
+            @APIResponse(
+                    responseCode="201",
+                    description="(CREATED) Uspešno dodan nov izdelek.",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = IzdelekDTO.class)
+                    )),
+            @APIResponse(
+                    responseCode="400",
+                    description="(BAD_REQUEST) Podana nepravilna oblika vhodnega objekta IzdelekDTO.",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorDTO.class)
+                    )),
+            @APIResponse(
+                    responseCode="404",
+                    description="(NOT_FOUND) Ni bilo mogoče najti vseh potrebnih podatkov.",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorDTO.class)
+                    )),
+            @APIResponse(
+                    responseCode="409",
+                    description="(CONFLICT) Zaloga za izdelek že obstaja.",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorDTO.class)
+                    )),
+            @APIResponse(
+                    responseCode="503",
+                    description="(SERVICE UNAVALIABLE) Težava pri komunikaciji z drugo mikrostoritvijo.",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorDTO.class)
+                    ))
     })
     public Response createIzdelek(IzdelekDTO izdelekDTO) {
         ErrorDTO validationError = validacija(izdelekDTO, 0);
         if (validationError != null) {
-            return Response.status(Response.Status.BAD_REQUEST).entity(validationError).build();
+            return Response.status(validationError.getErrorCode()).entity(validationError).build();
         }
 
         PairDTO<IzdelekDTO, ErrorDTO> pair = izdelekService.dodajIzdelek(izdelekDTO);
         IzdelekDTO izdelek = pair.getValue();
+        ErrorDTO error = pair.getError();
 
-        return Response.status(Response.Status.CREATED).entity(izdelek).build();
+        if (error != null) {
+            return Response.status(error.getErrorCode()).entity(error).build();
+        }
+
+        return Response.status(201).entity(izdelek).build();
     }
 
     @PUT
-    @Operation(summary="Posodobi izdelek", description="Posodobi obstoječ izdelek.<br>" +
-            "Slike v polju slikeDodaj bodo dodane, v polju slike bodo posodobljene, v polju slikeBrisi bodo izbrisane.<br>" +
-            "Lastnosti v polju lastnostiDodaj bodo dodane, v polju lastnosti bodo posodobljene, v polju lastnostiBrisi bodo izbrisane.")
+    @Operation(
+            summary="Posodobi izdelek",
+            description="Posodobi obstoječ izdelek.<br>" +
+                    "Slike v polju slikeDodaj bodo dodane, v polju slike bodo posodobljene, v polju slikeBrisi bodo izbrisane.<br>" +
+                    "Lastnosti v polju lastnostiDodaj bodo dodane, v polju lastnosti bodo posodobljene, v polju lastnostiBrisi bodo izbrisane.<br>" +
+                    "V primeru napake vrne objekt ErrorDTO z opisom napake."
+    )
     @APIResponses({
-            @APIResponse(responseCode="200", description="(OK) Uspešno posodobljen izdelek."),
-            @APIResponse(responseCode="400", description="(BAD_REQUEST) Podana nepravilna oblika oz. nepopolna oblika IzdelekDTO."),
-            @APIResponse(responseCode="404", description="(NOT_FOUND) Izdelka ni bilo mogoče najti.")
+            @APIResponse(
+                    responseCode="200",
+                    description="(OK) Uspešno posodobljen izdelek.",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = IzdelekDTO.class)
+                    )),
+            @APIResponse(
+                    responseCode="400",
+                    description="(BAD_REQUEST) Podana nepravilna oblika vhodnega objekta IzdelekDTO.",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorDTO.class)
+                    )),
+            @APIResponse(
+                    responseCode="404",
+                    description="(NOT_FOUND) Ni bilo mogoče najti vseh potrebnih podatkov.",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorDTO.class)
+                    )),
+            @APIResponse(
+                    responseCode="503",
+                    description="(SERVICE UNAVALIABLE) Težava pri komunikaciji z drugo mikrostoritvijo.",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorDTO.class)
+                    ))
     })
     public Response updateIzdelek(IzdelekDTO izdelekDTO) {
         ErrorDTO validationError = validacija(izdelekDTO, 1);
         if (validationError != null) {
-            return Response.status(Response.Status.BAD_REQUEST).entity(validationError).build();
+            return Response.status(validationError.getErrorCode()).entity(validationError).build();
         }
 
         PairDTO<IzdelekDTO, ErrorDTO> pair  = izdelekService.posodobiIzdelek(izdelekDTO);
@@ -199,27 +362,54 @@ public class IzdelekREST {
         ErrorDTO error = pair.getError();
 
         if (error != null) {
-            if (error.getErrorCode() == 404) {
-                return Response.status(Response.Status.NOT_FOUND).entity(pair.getError()).build();
-            }
+            return Response.status(error.getErrorCode()).entity(error).build();
         }
 
-        return Response.status(Response.Status.OK).entity(izdelek).build();
+        return Response.status(200).entity(izdelek).build();
     }
 
     @DELETE
     @Path("{id}")
-    @Operation(summary="Izbriši izdelek", description="Izbriši oziroma naredi mehki izbris nad izdelkom s podanim id.")
+    @Operation(
+            summary="Izbriši izdelek",
+            description="Izvede mehki izbris nad izdelkom s podanim id.<br>" +
+                    "V primeru napake vrne objekt ErrorDTO z opisom napake."
+    )
     @APIResponses({
-            @APIResponse(responseCode="204", description="(NO_CONTENT) Uspešno izbriše izdelek s podanim id."),
-            @APIResponse(responseCode="400", description="(BAD_REQUEST) Podana nepravilna oblika id v url."),
-            @APIResponse(responseCode="404", description="(NOT_FOUND) Izdelka ni bilo mogoče najti.")
+            @APIResponse(
+                    responseCode="204",
+                    description="(NO_CONTENT) Uspešno izbriše izdelek s podanim id.",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = IzdelekDTO.class)
+                    )),
+            @APIResponse(
+                    responseCode="400",
+                    description="(BAD_REQUEST) Podana nepravilna oblika URL.",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorDTO.class)
+                    )),
+            @APIResponse(
+                    responseCode="404",
+                    description="(NOT_FOUND) Ni bilo mogoče najti vseh potrebnih podatkov.",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorDTO.class)
+                    )),
+            @APIResponse(
+                    responseCode="503",
+                    description="(SERVICE UNAVALIABLE) Težava pri komunikaciji z drugo mikrostoritvijo.",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorDTO.class)
+                    ))
     })
     public Response deleteIzdelek(@PathParam("id") Long id) {
         if (id == null) {
             ErrorDTO parameterError = new ErrorDTO(400, "V URL mora biti podan parameter id.");
             log.info("Path parameter error: V URL ni podanega id");
-            return Response.status(Response.Status.BAD_REQUEST).entity(parameterError).build();
+            return Response.status(parameterError.getErrorCode()).entity(parameterError).build();
         }
 
         PairDTO<IzdelekDTO, ErrorDTO> pair  = izdelekService.izbrisiIzdelek(id);
@@ -227,11 +417,9 @@ public class IzdelekREST {
         ErrorDTO error = pair.getError();
 
         if (error != null) {
-            if (error.getErrorCode() == 404) {
-                return Response.status(Response.Status.NOT_FOUND).entity(error).build();
-            }
+            return Response.status(error.getErrorCode()).entity(error).build();
         }
 
-        return Response.status(Response.Status.NO_CONTENT).entity(izdelek).build();
+        return Response.status(204).entity(izdelek).build();
     }
 }
