@@ -4,6 +4,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.eclipse.microprofile.faulttolerance.CircuitBreaker;
+import org.eclipse.microprofile.faulttolerance.Fallback;
+import org.eclipse.microprofile.faulttolerance.Retry;
+import org.eclipse.microprofile.faulttolerance.Timeout;
 import si.nakupify.service.dto.ErrorDTO;
 import si.nakupify.service.dto.PairDTO;
 import si.nakupify.service.dto.ZalogaDTO;
@@ -31,6 +35,27 @@ public class SkladisceClient {
         mapper = new ObjectMapper();
     }
 
+    public PairDTO<ZalogaDTO, ErrorDTO> comunicationError1(Long id_izdelek) {
+        ErrorDTO error = new ErrorDTO(503, "Napaka pri komunikaciji z microservice-skladisce.");
+        return new PairDTO<>(null, error);
+    }
+
+    public ErrorDTO comunicationError2(Long id_izdelek) {
+        ErrorDTO error = new ErrorDTO(503, "Napaka pri komunikaciji z microservice-skladisce.");
+        return error;
+    }
+
+    @Retry(
+            maxRetries = 3,
+            delay = 500
+    )
+    @Timeout(2000)
+    @CircuitBreaker(
+            requestVolumeThreshold = 5,
+            failureRatio = 0.5,
+            delay = 10000
+    )
+    @Fallback(fallbackMethod = "comunicationError1")
     public PairDTO<ZalogaDTO, ErrorDTO> getZalogaDTO(Long id_izdelek) {
         try {
             String url = skladisceUrl + "/zaloga/" + id_izdelek;
@@ -54,11 +79,21 @@ public class SkladisceClient {
             return new PairDTO<>(zalogaDTO, null);
         } catch (Exception e) {
             log.severe("Communication error: Napaka pri komunikaciji z microservice-skladisce. Napaka: " + e.getMessage());
-            ErrorDTO error = new ErrorDTO(503, "Napaka pri komunikaciji z microservice-skladisce.");
-            return new PairDTO<>(null, error);
+            throw new RuntimeException(e);
         }
     }
 
+    @Retry(
+            maxRetries = 3,
+            delay = 500
+    )
+    @Timeout(2000)
+    @CircuitBreaker(
+            requestVolumeThreshold = 5,
+            failureRatio = 0.5,
+            delay = 10000
+    )
+    @Fallback(fallbackMethod = "comunicationError2")
     public ErrorDTO postZalogaDTO(Long id_izdelek) {
         try {
             ZalogaDTO zaloga = new ZalogaDTO(id_izdelek, 0, 0);
@@ -82,8 +117,7 @@ public class SkladisceClient {
             return null;
         } catch (Exception e) {
             log.severe("Communication error: Napaka pri komunikaciji z microservice-skladisce. Napaka: " + e.getMessage());
-            ErrorDTO error = new ErrorDTO(503, "Napaka pri komunikaciji z microservice-skladisce.");
-            return error;
+            throw new RuntimeException(e);
         }
     }
 
