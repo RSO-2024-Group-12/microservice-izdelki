@@ -1,6 +1,6 @@
-INSERT INTO izdelek (id, naziv, opis, cena, aktiven, datum_dodajanja, datum_spremembe) VALUES
-(100, 'Pametni telefon X', 'Napreden pametni telefon z odličnim fotoaparatom', 699.99, TRUE, CURRENT_DATE, CURRENT_DATE),
-(101, 'Brezžične slušalke Y', 'Slušalke z dolgo življenjsko dobo baterije in čistim zvokom', 149.99, TRUE, CURRENT_DATE, CURRENT_DATE);
+INSERT INTO izdelek (id, naziv, opis, cena, aktiven, datum_dodajanja, datum_spremembe, tenant) VALUES
+(100, 'Pametni telefon X', 'Napreden pametni telefon z odličnim fotoaparatom', 699.99, TRUE, CURRENT_DATE, CURRENT_DATE, 'org1'),
+(101, 'Brezžične slušalke Y', 'Slušalke z dolgo življenjsko dobo baterije in čistim zvokom', 149.99, TRUE, CURRENT_DATE, CURRENT_DATE, 'org2');
 
 INSERT INTO lastnost (id, id_izdelek, lastnost, vrednost) VALUES
 (100, 100, 'Barva', 'Črna'),
@@ -11,4 +11,3 @@ INSERT INTO lastnost (id, id_izdelek, lastnost, vrednost) VALUES
 INSERT INTO slika (id, id_izdelek, url) VALUES
 (100, 100, 'https://example.com/slike/pametni-telefon-x.jpg'),
 (101, 101, 'https://example.com/slike/slusalke-y.jpg');
-

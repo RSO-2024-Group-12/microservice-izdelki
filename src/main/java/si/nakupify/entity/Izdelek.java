@@ -21,14 +21,17 @@ public class Izdelek extends PanacheEntity {
 
     public Date datum_spremembe;
 
+    public String tenant;
+
     public Izdelek() {}
 
-    public Izdelek(String naziv, String opis, Float cena) {
+    public Izdelek(String naziv, String opis, Float cena, String tenant) {
         this.naziv = naziv;
         this.opis = opis;
         this.cena = cena;
         this.aktiven = true;
         this.datum_dodajanja = Date.valueOf(LocalDate.now());
         this.datum_spremembe = Date.valueOf(LocalDate.now());
+        this.tenant = tenant;
     }
 }

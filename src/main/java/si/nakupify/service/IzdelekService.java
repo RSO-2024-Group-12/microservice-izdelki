@@ -34,6 +34,9 @@ public class IzdelekService {
     @Inject
     SkladisceClient skladisceClient;
 
+    @Inject
+    TenantService tenantService;
+
     private Logger log = Logger.getLogger(IzdelekService.class.getName());
 
     @PostConstruct
@@ -46,19 +49,19 @@ public class IzdelekService {
         log.info("Ustavitev microservice-izdelki");
     }
 
-    public PairDTO<List<IzdelekDTO>, ErrorDTO> pridobiVseIzdelke() {
-        return pridobiSeznamIzdelkov(izdelekRepository.listAll());
+    public PairDTO<List<IzdelekDTO>, ErrorDTO> pridobiVseIzdelke(String tenant) {
+        return pridobiSeznamIzdelkov(izdelekRepository.izdelekiPoTenant(tenant), tenant);
     }
 
-    public PairDTO<List<IzdelekDTO>, ErrorDTO> pridobiVseAktivneIzdelke() {
-        return pridobiSeznamIzdelkov(izdelekRepository.aktivniIzdeleki());
+    public PairDTO<List<IzdelekDTO>, ErrorDTO> pridobiVseAktivneIzdelke(String tenant) {
+        return pridobiSeznamIzdelkov(izdelekRepository.aktivniIzdeleki(tenant), tenant);
     }
 
-    public PairDTO<List<IzdelekDTO>, ErrorDTO> pridobiSeznamIzdelkov(List<Izdelek> izdelekList) {
+    public PairDTO<List<IzdelekDTO>, ErrorDTO> pridobiSeznamIzdelkov(List<Izdelek> izdelekList, String tenant) {
         List<IzdelekDTO> izdelekDTOList = new ArrayList<>();
 
         for (Izdelek izdelek : izdelekList) {
-            PairDTO<IzdelekDTO, ErrorDTO> pair = pridobiIzdelek(izdelek.id);
+            PairDTO<IzdelekDTO, ErrorDTO> pair = pridobiIzdelek(izdelek.id, tenant);
             IzdelekDTO izdelekDTO = pair.getValue();
             ErrorDTO error = pair.getError();
 
@@ -72,11 +75,17 @@ public class IzdelekService {
         return new PairDTO<>(izdelekDTOList, null);
     }
 
-    public PairDTO<IzdelekDTO, ErrorDTO> pridobiIzdelek(Long id_izdelek) {
+    public PairDTO<IzdelekDTO, ErrorDTO> pridobiIzdelek(Long id_izdelek, String tenant) {
         Izdelek izdelek = izdelekRepository.findById(id_izdelek);
         if (izdelek == null) {
             log.info("Not Found Error: Izdelka z id=" + id_izdelek + " ni bilo mogoče najti");
             ErrorDTO notFoundError = new ErrorDTO(404, "Izdelka s podanim id_izdelek ni bilo mogoče najti!");
+            return new PairDTO<>(null, notFoundError);
+        }
+
+        if (!tenant.equals(izdelek.tenant)) {
+            log.info("Auth Error: Ne smete brati ali spreminjati podatkov druge organizacije");
+            ErrorDTO notFoundError = new ErrorDTO(401, "Ni mogoče brati ali spreminjati podatkov druge organizacije.");
             return new PairDTO<>(null, notFoundError);
         }
 
@@ -85,6 +94,7 @@ public class IzdelekService {
         izdelekDTO.setNaziv(izdelek.naziv);
         izdelekDTO.setOpis(izdelek.opis);
         izdelekDTO.setCena(izdelek.cena);
+        izdelekDTO.setTenant(izdelek.tenant);
         izdelekDTO.setAktiven(izdelek.aktiven);
         izdelekDTO.setDatum_dodajanja(izdelek.datum_dodajanja);
         izdelekDTO.setDatum_spremembe(izdelek.datum_spremembe);
@@ -98,6 +108,7 @@ public class IzdelekService {
         }
 
         izdelekDTO.setZaloga(zalogaDTO.getStock());
+
         izdelekDTO.setSlike(slikaService.pridobiSlike(izdelek.id));
         izdelekDTO.setLastnosti(lastnostService.pridobiLastnosti(izdelek.id));
 
@@ -105,11 +116,11 @@ public class IzdelekService {
     }
 
     @Transactional
-    public PairDTO<IzdelekDTO, ErrorDTO> dodajIzdelek(IzdelekDTO izdelekDTO) {
-        Izdelek izdelek = new Izdelek(izdelekDTO.getNaziv(), izdelekDTO.getOpis(), izdelekDTO.getCena());
+    public PairDTO<IzdelekDTO, ErrorDTO> dodajIzdelek(IzdelekDTO izdelekDTO, String tenant) {
+        Izdelek izdelek = new Izdelek(izdelekDTO.getNaziv(), izdelekDTO.getOpis(), izdelekDTO.getCena(), tenant);
         izdelekRepository.persist(izdelek);
 
-        ErrorDTO error = skladisceClient.postZalogaDTO(izdelek.id);
+        ErrorDTO error = skladisceClient.postZalogaDTO(izdelek.id, tenant);
 
         if (error != null) {
             return new PairDTO<>(null, error);
@@ -118,15 +129,21 @@ public class IzdelekService {
         slikaService.posodobiSlike(izdelek, izdelekDTO);
         lastnostService.posodobiLastnosti(izdelek, izdelekDTO);
 
-        return pridobiIzdelek(izdelek.id);
+        return pridobiIzdelek(izdelek.id, tenant);
     }
 
     @Transactional
-    public PairDTO<IzdelekDTO, ErrorDTO> posodobiIzdelek(IzdelekDTO izdelekDTO) {
+    public PairDTO<IzdelekDTO, ErrorDTO> posodobiIzdelek(IzdelekDTO izdelekDTO, String tenant) {
         Izdelek izdelek = izdelekRepository.findById(izdelekDTO.getId_izdelek());
         if (izdelek == null) {
             log.info("Not Found Error: Izdelka z id=" + izdelekDTO.getId_izdelek() + " ni bilo mogoče najti");
             ErrorDTO notFoundError = new ErrorDTO(404, "Izdelka s podanim id_izdelek ni bilo mogoče najti!");
+            return new PairDTO<>(null, notFoundError);
+        }
+
+        if (!tenant.equals(izdelek.tenant)) {
+            log.info("Auth Error: Ne smete brati ali spreminjati podatkov druge organizacije");
+            ErrorDTO notFoundError = new ErrorDTO(401, "Ni mogoče brati ali spreminjati podatkov druge organizacije.");
             return new PairDTO<>(null, notFoundError);
         }
 
@@ -138,11 +155,11 @@ public class IzdelekService {
         slikaService.posodobiSlike(izdelek, izdelekDTO);
         lastnostService.posodobiLastnosti(izdelek, izdelekDTO);
 
-        return pridobiIzdelek(izdelek.id);
+        return pridobiIzdelek(izdelek.id, tenant);
     }
 
     @Transactional
-    public PairDTO<IzdelekDTO, ErrorDTO> izbrisiIzdelek(Long id_izdelek) {
+    public PairDTO<IzdelekDTO, ErrorDTO> izbrisiIzdelek(Long id_izdelek, String tenant) {
         Izdelek izdelek = izdelekRepository.findById(id_izdelek);
         if (izdelek == null) {
             log.info("Not Found Error: Izdelka z id=" + id_izdelek + " ni bilo mogoče najti");
@@ -150,8 +167,14 @@ public class IzdelekService {
             return new PairDTO<>(null, notFoundError);
         }
 
+        if (!tenant.equals(izdelek.tenant)) {
+            log.info("Auth Error: Ne smete brati ali spreminjati podatkov druge organizacije");
+            ErrorDTO notFoundError = new ErrorDTO(401, "Ni mogoče brati ali spreminjati podatkov druge organizacije.");
+            return new PairDTO<>(null, notFoundError);
+        }
+
         izdelek.aktiven = false;
 
-        return pridobiIzdelek(izdelek.id);
+        return pridobiIzdelek(izdelek.id, tenant);
     }
 }

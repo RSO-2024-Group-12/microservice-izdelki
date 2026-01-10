@@ -40,7 +40,7 @@ public class SkladisceClient {
         return new PairDTO<>(null, error);
     }
 
-    public ErrorDTO comunicationError2(Long id_izdelek) {
+    public ErrorDTO comunicationError2(Long id_izdelek, String tenant) {
         ErrorDTO error = new ErrorDTO(503, "Napaka pri komunikaciji z microservice-skladisce.");
         return error;
     }
@@ -94,9 +94,9 @@ public class SkladisceClient {
             delay = 10000
     )
     @Fallback(fallbackMethod = "comunicationError2")
-    public ErrorDTO postZalogaDTO(Long id_izdelek) {
+    public ErrorDTO postZalogaDTO(Long id_izdelek, String tenant) {
         try {
-            ZalogaDTO zaloga = new ZalogaDTO(id_izdelek, 0, 0);
+            ZalogaDTO zaloga = new ZalogaDTO(id_izdelek, tenant, 0, 0);
             String url = skladisceUrl + "/zaloga";
             String payload = mapper.writeValueAsString(zaloga);
 
