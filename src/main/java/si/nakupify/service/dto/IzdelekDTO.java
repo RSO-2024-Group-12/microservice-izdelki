@@ -13,8 +13,6 @@ public class IzdelekDTO {
 
     private Float cena;
 
-    private String tenant;
-
     private Boolean aktiven;
 
     private Date datum_dodajanja;
@@ -37,7 +35,7 @@ public class IzdelekDTO {
 
     public IzdelekDTO() {}
 
-    public IzdelekDTO(Long id_izdelek, String naziv, String opis, Float cena, String tenant, Boolean aktiven,
+    public IzdelekDTO(Long id_izdelek, String naziv, String opis, Float cena, Boolean aktiven,
                       Date datum_dodajanja, Date datum_spremembe, Integer zaloga,
                       List<SlikaDTO> slike, List<SlikaDTO> slikeDodaj, List<SlikaDTO> slikeBrisi,
                       List<LastnostDTO> lastnosti, List<LastnostDTO> lastnostiDodaj, List<LastnostDTO> lastnostiBrisi) {
@@ -45,7 +43,6 @@ public class IzdelekDTO {
         this.naziv = naziv;
         this.opis = opis;
         this.cena = cena;
-        this.tenant = tenant;
         this.aktiven = aktiven;
         this.datum_dodajanja = datum_dodajanja;
         this.datum_spremembe = datum_spremembe;
@@ -88,14 +85,6 @@ public class IzdelekDTO {
 
     public void setCena(Float cena) {
         this.cena = cena;
-    }
-
-    public String getTenant() {
-        return tenant;
-    }
-
-    public void setTenant(String tenant) {
-        this.tenant = tenant;
     }
 
     public Boolean getAktiven() {
