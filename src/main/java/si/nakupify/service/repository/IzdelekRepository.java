@@ -9,7 +9,11 @@ import java.util.List;
 @ApplicationScoped
 public class IzdelekRepository implements PanacheRepository<Izdelek> {
 
-    public List<Izdelek> aktivniIzdeleki() {
-        return list("aktiven = true");
+    public List<Izdelek> izdelekiPoTenant(String tenant) {
+        return list("tenant", tenant);
+    }
+
+    public List<Izdelek> aktivniIzdeleki(String tenant) {
+        return list("aktiven = true and tenant = ?1", tenant);
     }
 }

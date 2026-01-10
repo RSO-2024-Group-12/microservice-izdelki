@@ -11,6 +11,7 @@ import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 import si.nakupify.service.IzdelekService;
+import si.nakupify.service.TenantService;
 import si.nakupify.service.dto.*;
 
 import java.util.List;
@@ -23,6 +24,9 @@ public class IzdelekREST {
 
     @Inject
     IzdelekService izdelekService;
+
+    @Inject
+    TenantService tenantService;
 
     private Logger log = Logger.getLogger(IzdelekREST.class.getName());
 
@@ -143,7 +147,15 @@ public class IzdelekREST {
                     ))
     })
     public Response getVsiIzdelki() {
-        PairDTO<List<IzdelekDTO>, ErrorDTO> izdelkiDTO = izdelekService.pridobiVseIzdelke();
+        String tenant = tenantService.getTenant();
+
+        if (tenant == null) {
+            ErrorDTO authError = new ErrorDTO(400, "Mora biti podan JWT.");
+            log.info("Auth error: JWT mora biti podan");
+            return Response.status(authError.getErrorCode()).entity(authError).build();
+        }
+
+        PairDTO<List<IzdelekDTO>, ErrorDTO> izdelkiDTO = izdelekService.pridobiVseIzdelke(tenant);
         List<IzdelekDTO> izdelki = izdelkiDTO.getValue();
         ErrorDTO error = izdelkiDTO.getError();
 
@@ -185,7 +197,15 @@ public class IzdelekREST {
                     ))
     })
     public Response getVsiAktivniIzdelki() {
-        PairDTO<List<IzdelekDTO>, ErrorDTO> izdelkiDTO = izdelekService.pridobiVseAktivneIzdelke();
+        String tenant = tenantService.getTenant();
+
+        if (tenant == null) {
+            ErrorDTO authError = new ErrorDTO(400, "Mora biti podan JWT.");
+            log.info("Auth error: JWT mora biti podan");
+            return Response.status(authError.getErrorCode()).entity(authError).build();
+        }
+
+        PairDTO<List<IzdelekDTO>, ErrorDTO> izdelkiDTO = izdelekService.pridobiVseAktivneIzdelke(tenant);
         List<IzdelekDTO> izdelki = izdelkiDTO.getValue();
         ErrorDTO error = izdelkiDTO.getError();
 
@@ -240,7 +260,15 @@ public class IzdelekREST {
             return Response.status(parameterError.getErrorCode()).entity(parameterError).build();
         }
 
-        PairDTO<IzdelekDTO, ErrorDTO> pair = izdelekService.pridobiIzdelek(id);
+        String tenant = tenantService.getTenant();
+
+        if (tenant == null) {
+            ErrorDTO authError = new ErrorDTO(400, "Mora biti podan JWT.");
+            log.info("Auth error: JWT mora biti podan");
+            return Response.status(authError.getErrorCode()).entity(authError).build();
+        }
+
+        PairDTO<IzdelekDTO, ErrorDTO> pair = izdelekService.pridobiIzdelek(id, tenant);
         IzdelekDTO izdelek = pair.getValue();
         ErrorDTO error = pair.getError();
 
@@ -302,7 +330,15 @@ public class IzdelekREST {
             return Response.status(validationError.getErrorCode()).entity(validationError).build();
         }
 
-        PairDTO<IzdelekDTO, ErrorDTO> pair = izdelekService.dodajIzdelek(izdelekDTO);
+        String tenant = tenantService.getTenant();
+
+        if (tenant == null) {
+            ErrorDTO authError = new ErrorDTO(400, "Mora biti podan JWT.");
+            log.info("Auth error: JWT mora biti podan");
+            return Response.status(authError.getErrorCode()).entity(authError).build();
+        }
+
+        PairDTO<IzdelekDTO, ErrorDTO> pair = izdelekService.dodajIzdelek(izdelekDTO, tenant);
         IzdelekDTO izdelek = pair.getValue();
         ErrorDTO error = pair.getError();
 
@@ -357,7 +393,15 @@ public class IzdelekREST {
             return Response.status(validationError.getErrorCode()).entity(validationError).build();
         }
 
-        PairDTO<IzdelekDTO, ErrorDTO> pair  = izdelekService.posodobiIzdelek(izdelekDTO);
+        String tenant = tenantService.getTenant();
+
+        if (tenant == null) {
+            ErrorDTO authError = new ErrorDTO(400, "Mora biti podan JWT.");
+            log.info("Auth error: JWT mora biti podan");
+            return Response.status(authError.getErrorCode()).entity(authError).build();
+        }
+
+        PairDTO<IzdelekDTO, ErrorDTO> pair  = izdelekService.posodobiIzdelek(izdelekDTO, tenant);
         IzdelekDTO izdelek = pair.getValue();
         ErrorDTO error = pair.getError();
 
@@ -412,7 +456,15 @@ public class IzdelekREST {
             return Response.status(parameterError.getErrorCode()).entity(parameterError).build();
         }
 
-        PairDTO<IzdelekDTO, ErrorDTO> pair  = izdelekService.izbrisiIzdelek(id);
+        String tenant = tenantService.getTenant();
+
+        if (tenant == null) {
+            ErrorDTO authError = new ErrorDTO(400, "Mora biti podan JWT.");
+            log.info("Auth error: JWT mora biti podan");
+            return Response.status(authError.getErrorCode()).entity(authError).build();
+        }
+
+        PairDTO<IzdelekDTO, ErrorDTO> pair  = izdelekService.izbrisiIzdelek(id, tenant);
         IzdelekDTO izdelek = pair.getValue();
         ErrorDTO error = pair.getError();
 

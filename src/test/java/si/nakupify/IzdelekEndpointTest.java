@@ -6,6 +6,7 @@ import io.restassured.http.ContentType;
 import org.junit.jupiter.api.Test;
 
 import si.nakupify.service.IzdelekService;
+import si.nakupify.service.TenantService;
 import si.nakupify.service.dto.ErrorDTO;
 import si.nakupify.service.dto.IzdelekDTO;
 import si.nakupify.service.dto.PairDTO;
@@ -19,6 +20,9 @@ public class IzdelekEndpointTest {
 
     @InjectMock
     IzdelekService izdelekService;
+
+    @InjectMock
+    TenantService tenantService;
 
     private IzdelekDTO izdelekDTO(Long id) {
         IzdelekDTO izdelekDTO = new IzdelekDTO();
@@ -35,7 +39,8 @@ public class IzdelekEndpointTest {
 
     @Test
     void getIzdelek_test() {
-        when(izdelekService.pridobiIzdelek(5L)).thenReturn(new PairDTO<>(izdelekDTO(5L), null));
+        when(tenantService.getTenant()).thenReturn("org1");
+        when(izdelekService.pridobiIzdelek(any(), any())).thenReturn(new PairDTO<>(izdelekDTO(5L), null));
 
         given()
                 .accept(ContentType.JSON)
@@ -45,12 +50,14 @@ public class IzdelekEndpointTest {
                 .statusCode(200)
                 .body("id_izdelek", equalTo(5));
 
-        verify(izdelekService).pridobiIzdelek(5L);
+        verify(tenantService).getTenant();
+        verify(izdelekService).pridobiIzdelek(any(), any());
     }
 
     @Test
     void createIzdelek_test() {
-        when(izdelekService.dodajIzdelek(any())).thenReturn(new PairDTO<>(izdelekDTO(5L), null));
+        when(tenantService.getTenant()).thenReturn("org1");
+        when(izdelekService.dodajIzdelek(any(), any())).thenReturn(new PairDTO<>(izdelekDTO(5L), null));
 
         String requestBody = """
         {
@@ -75,12 +82,14 @@ public class IzdelekEndpointTest {
                 .statusCode(201)
                 .body("id_izdelek", equalTo(5));
 
-        verify(izdelekService).dodajIzdelek(any());
+        verify(tenantService).getTenant();
+        verify(izdelekService).dodajIzdelek(any(), any());
     }
 
     @Test
     void updateIzdelek_test() {
-        when(izdelekService.posodobiIzdelek(any())).thenReturn(new PairDTO<>(izdelekDTO(5L), null));
+        when(tenantService.getTenant()).thenReturn("org1");
+        when(izdelekService.posodobiIzdelek(any(), any())).thenReturn(new PairDTO<>(izdelekDTO(5L), null));
 
         String requestBody = """
         {
@@ -106,12 +115,14 @@ public class IzdelekEndpointTest {
                 .statusCode(200)
                 .body("id_izdelek", equalTo(5));
 
-        verify(izdelekService).posodobiIzdelek(any());
+        verify(tenantService).getTenant();
+        verify(izdelekService).posodobiIzdelek(any(), any());
     }
 
     @Test
     void deleteIzdelek_test() {
-        when(izdelekService.izbrisiIzdelek(any())).thenReturn(new PairDTO<>(izdelekDTO(5L), null));
+        when(tenantService.getTenant()).thenReturn("org1");
+        when(izdelekService.izbrisiIzdelek(any(), any())).thenReturn(new PairDTO<>(izdelekDTO(5L), null));
 
         given()
                 .accept(ContentType.JSON)
@@ -120,6 +131,7 @@ public class IzdelekEndpointTest {
         .then()
                 .statusCode(204);
 
-        verify(izdelekService).izbrisiIzdelek(5L);
+        verify(tenantService).getTenant();
+        verify(izdelekService).izbrisiIzdelek(any(), any());
     }
 }
