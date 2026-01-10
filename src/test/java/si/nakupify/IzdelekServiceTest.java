@@ -43,7 +43,6 @@ public class IzdelekServiceTest {
         izdelek.naziv = "Test";
         izdelek.opis = "Test";
         izdelek.cena = 9.99F;
-        izdelek.tenant = "org1";
         izdelek.aktiven = true;
         izdelek.datum_dodajanja = Date.valueOf(LocalDate.now());
         izdelek.datum_spremembe = Date.valueOf(LocalDate.now());
@@ -74,7 +73,6 @@ public class IzdelekServiceTest {
         izdelekDTO.setNaziv("Test");
         izdelekDTO.setOpis("Test");
         izdelekDTO.setCena(9.99F);
-        izdelekDTO.setTenant("org1");
 
         return izdelekDTO;
     }
@@ -83,7 +81,7 @@ public class IzdelekServiceTest {
     void pridobiIzdelek_test() {
         when(izdelekRepository.findById(5L)).thenReturn(izdelekEntity(5L));
 
-        ZalogaDTO zalogaDTO = new ZalogaDTO(5L, "org1", 100, 0);
+        ZalogaDTO zalogaDTO = new ZalogaDTO(5L, 100, 0);
         when(skladisceClient.getZalogaDTO(5L)).thenReturn(new PairDTO<>(zalogaDTO, null));
 
         List<SlikaDTO> slike = List.of(new SlikaDTO(1L, "example.org"));
@@ -92,7 +90,7 @@ public class IzdelekServiceTest {
         List<LastnostDTO> lastnosti = List.of(new LastnostDTO(1L, "Test", "Test"));
         when(lastnostService.pridobiLastnosti(5L)).thenReturn(lastnosti);
 
-        PairDTO<IzdelekDTO, ErrorDTO> result = izdelekService.pridobiIzdelek(5L, "org1");
+        PairDTO<IzdelekDTO, ErrorDTO> result = izdelekService.pridobiIzdelek(5L);
 
         assertNotNull(result);
         assertNotNull(result.getValue());
@@ -110,7 +108,6 @@ public class IzdelekServiceTest {
         assertEquals(100, izdelekDTO.getZaloga());
         assertEquals(1, izdelekDTO.getSlike().size());
         assertEquals(1, izdelekDTO.getLastnosti().size());
-        assertEquals("org1", izdelekDTO.getTenant());
 
         verify(izdelekRepository).findById(5L);
         verify(skladisceClient).getZalogaDTO(5L);
@@ -126,7 +123,7 @@ public class IzdelekServiceTest {
             return null;
         }).when(izdelekRepository).persist(any(Izdelek.class));
 
-        when(skladisceClient.postZalogaDTO(5L, "org1")).thenReturn(null);
+        when(skladisceClient.postZalogaDTO(5L)).thenReturn(null);
 
         doNothing().when(slikaService).posodobiSlike(any(Izdelek.class), any(IzdelekDTO.class));
         doNothing().when(lastnostService).posodobiLastnosti(any(Izdelek.class), any(IzdelekDTO.class));
@@ -142,11 +139,10 @@ public class IzdelekServiceTest {
         mockDTO.setZaloga(100);
         mockDTO.setSlike(List.of(new SlikaDTO(1L, "example.org")));
         mockDTO.setLastnosti(List.of(new LastnostDTO(1L, "Test", "Test")));
-        mockDTO.setTenant("org1");
 
-        doReturn(new PairDTO<>(mockDTO, null)).when(izdelekService).pridobiIzdelek(anyLong(), any());
+        doReturn(new PairDTO<>(mockDTO, null)).when(izdelekService).pridobiIzdelek(anyLong());
 
-        PairDTO<IzdelekDTO, ErrorDTO> result = izdelekService.dodajIzdelek(makeIzdelekDTO(0L, 0), "org1");
+        PairDTO<IzdelekDTO, ErrorDTO> result = izdelekService.dodajIzdelek(makeIzdelekDTO(0L, 0));
 
         assertNotNull(result);
         assertNotNull(result.getValue());
@@ -164,13 +160,12 @@ public class IzdelekServiceTest {
         assertEquals(100, izdelekDTO.getZaloga());
         assertEquals(1, izdelekDTO.getSlike().size());
         assertEquals(1, izdelekDTO.getLastnosti().size());
-        assertEquals("org1", izdelekDTO.getTenant());
 
         verify(izdelekRepository).persist(any(Izdelek.class));
-        verify(skladisceClient).postZalogaDTO(5L, "org1");
+        verify(skladisceClient).postZalogaDTO(5L);
         verify(slikaService).posodobiSlike(any(Izdelek.class), any(IzdelekDTO.class));
         verify(lastnostService).posodobiLastnosti(any(Izdelek.class), any(IzdelekDTO.class));
-        verify(izdelekService).pridobiIzdelek(5L, "org1");
+        verify(izdelekService).pridobiIzdelek(5L);
     }
 
     @Test
@@ -191,11 +186,10 @@ public class IzdelekServiceTest {
         mockDTO.setZaloga(100);
         mockDTO.setSlike(List.of(new SlikaDTO(1L, "example.org")));
         mockDTO.setLastnosti(List.of(new LastnostDTO(1L, "Test", "Test")));
-        mockDTO.setTenant("org1");
 
-        doReturn(new PairDTO<>(mockDTO, null)).when(izdelekService).pridobiIzdelek(anyLong(), any());
+        doReturn(new PairDTO<>(mockDTO, null)).when(izdelekService).pridobiIzdelek(anyLong());
 
-        PairDTO<IzdelekDTO, ErrorDTO> result = izdelekService.posodobiIzdelek(makeIzdelekDTO(5L, 1), "org1");
+        PairDTO<IzdelekDTO, ErrorDTO> result = izdelekService.posodobiIzdelek(makeIzdelekDTO(5L, 1));
 
         assertNotNull(result);
         assertNotNull(result.getValue());
@@ -213,12 +207,11 @@ public class IzdelekServiceTest {
         assertEquals(100, izdelekDTO.getZaloga());
         assertEquals(1, izdelekDTO.getSlike().size());
         assertEquals(1, izdelekDTO.getLastnosti().size());
-        assertEquals("org1", izdelekDTO.getTenant());
 
         verify(izdelekRepository).findById(5L);
         verify(slikaService).posodobiSlike(any(Izdelek.class), any(IzdelekDTO.class));
         verify(lastnostService).posodobiLastnosti(any(Izdelek.class), any(IzdelekDTO.class));
-        verify(izdelekService).pridobiIzdelek(5L, "org1");
+        verify(izdelekService).pridobiIzdelek(5L);
     }
 
     @Test
@@ -236,11 +229,10 @@ public class IzdelekServiceTest {
         mockDTO.setZaloga(100);
         mockDTO.setSlike(List.of(new SlikaDTO(1L, "example.org")));
         mockDTO.setLastnosti(List.of(new LastnostDTO(1L, "Test", "Test")));
-        mockDTO.setTenant("org1");
 
-        doReturn(new PairDTO<>(mockDTO, null)).when(izdelekService).pridobiIzdelek(anyLong(), any());
+        doReturn(new PairDTO<>(mockDTO, null)).when(izdelekService).pridobiIzdelek(anyLong());
 
-        PairDTO<IzdelekDTO, ErrorDTO> result = izdelekService.izbrisiIzdelek(5L, "org1");
+        PairDTO<IzdelekDTO, ErrorDTO> result = izdelekService.izbrisiIzdelek(5L);
 
         assertNotNull(result);
         assertNotNull(result.getValue());
@@ -258,9 +250,8 @@ public class IzdelekServiceTest {
         assertEquals(100, izdelekDTO.getZaloga());
         assertEquals(1, izdelekDTO.getSlike().size());
         assertEquals(1, izdelekDTO.getLastnosti().size());
-        assertEquals("org1", izdelekDTO.getTenant());
 
         verify(izdelekRepository).findById(5L);
-        verify(izdelekService).pridobiIzdelek(5L, "org1");
+        verify(izdelekService).pridobiIzdelek(5L);
     }
 }
